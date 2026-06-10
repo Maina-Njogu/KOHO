@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOHO Investment</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{\n  --bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c26;--surface3:#242432;\n  --border:#2a2a3a;--text:#f0eff8;--muted:#6b6a80;\n  --accent:#7c6af7;--accent-light:rgba(124,106,247,0.15);--accent-glow:rgba(124,106,247,0.3);\n  --green:#22c55e;--green-dim:rgba(34,197,94,0.12);\n  --red:#ef4444;--red-dim:rgba(239,68,68,0.12);\n  --gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);\n  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.12);\n  --orange:#f97316;--orange-dim:rgba(249,115,22,0.12);\n  --radius:12px;--radius-sm:8px;--radius-lg:16px;\n  --font:'Space Grotesk',sans-serif;--font-display:'Syne',sans-serif;\n}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;min-height:100vh}
+
+/* HEADER */
+#appShell{display:none}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.hlogo{font-family:var(--font-display);font-size:20px;font-weight:800;background:linear-gradient(135deg,#7c6af7,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hright{display:flex;align-items:center;gap:10px}
+.sync-pill{font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border);display:flex;align-items:center;gap:5px;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+select.msel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:12px;padding:5px 9px;cursor:pointer}
+.pin-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;padding:5px 12px;cursor:pointer;display:flex;align-items:center;gap:5px}
+
+/* LAYOUT */
+.wrap{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 60px)}
+aside{background:var(--surface);border-right:1px solid var(--border);padding:1.25rem .75rem;display:flex;flex-direction:column;gap:2px}
+.nlbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:0 10px;margin:14px 0 5px;font-weight:600}
+.nb{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--radius-sm);background:none;border:none;color:var(--muted);font-size:13px;font-family:var(--font);font-weight:500;cursor:pointer;width:100%;text-align:left}
+.nb:hover{background:var(--surface2);color:var(--text)}
+.nb.on{background:var(--accent-light);color:var(--accent);font-weight:600}
+.nb svg{width:16px;height:16px;stroke-width:2}
+.nc{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px}
+.nc.red{background:var(--red)}.nc.gold{background:var(--gold)}
+
+/* MAIN */
+main{padding:1.75rem;overflow-y:auto;background:var(--bg)}
+.pg{display:none}.pg.on{display:block}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+.pt{font-family:var(--font-display);font-size:24px;font-weight:800}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:1.5rem}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem}
+.mc.purple{border-left:3px solid var(--accent)}.mc.green{border-left:3px solid var(--green)}
+.mc.red{border-left:3px solid var(--red)}.mc.gold{border-left:3px solid var(--gold)}
+.ml{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:7px}
+.mv{font-size:22px;font-weight:700;font-family:var(--font-display)}
+.mv.purple{color:var(--accent)}.mv.green{color:var(--green)}.mv.red{color:var(--red)}.mv.gold{color:var(--gold)}
+.ms{font-size:12px;color:var(--muted);margin-top:3px}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.4rem}
+.ct{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:1rem}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;padding:8px 11px;border-bottom:1px solid var(--border)}
+td{padding:10px 11px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+
+/* MEMBER DIRECTORY STYLE */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.mcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;position:relative;display:flex;align-items:center;gap:12px}
+.av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;font-family:var(--font-display);background:var(--accent-light);color:var(--accent)}
+.mname{font-weight:600;font-size:13px;color:var(--text)}
+.mphone{font-size:11.5px;color:var(--muted)}
+
+/* PROGRESS STYLES */
+.loan-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;margin-bottom:10px}
+.loan-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.loan-progress{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;margin:8px 0}
+.loan-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:99px}
+.loan-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+
+.bx{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px}
+.bx.purple{background:var(--accent-light);color:var(--accent)}
+.bx.gold{background:var(--gold-dim);color:var(--gold)}
+.bx.red{background:var(--red-dim);color:var(--red)}
+
+.ldr{position:fixed;inset:0;background:rgba(10,10,15,.95);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.lsp{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltxt{font-family:var(--font-display);font-size:17px;color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="ldr" id="ldr"><div class="lsp"></div><div class="ltxt">Loading Data Pools...</div></div>
+<div id="appShell">
+
+<header>
+  <div class="hlogo">KOHO Investment</div>
+  <div class="hright">
+    <div class="sync-pill"><div class="dot"></div><span>Local System Running</span></div>
+    <select class="msel" id="gmonth" onchange="refresh()"></select>
+    <button class="pin-btn">Admin Dashboard</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <aside>
+    <div class="nlbl">Overview</div>
+    <button class="nb on" onclick="nav('dash',this)">Dashboard</button>
+    <button class="nb" onclick="nav('members',this)">Members <span class="nc" id="mcnt">0</span></button>
+    <div class="nlbl">Finance</div>
+    <button class="nb" onclick="nav('contribs',this)">Contributions</button>
+    <button class="nb" onclick="nav('loans',this)">Loans <span class="nc gold" id="lcnt">0</span></button>
+    <button class="nb" onclick="nav('fines',this)">Fines <span class="nc red" id="fcnt">0</span></button>
+    <div class="nlbl">Reports</div>
+    <button class="nb" onclick="exportCSV()">Export CSV</button>
+  </aside>
+
+  <main>
+    <div id="pg-dash" class="pg on">
+      <div class="ph"><div class="pt">Dashboard</div></div>
+      <div class="metrics">
+        <div class="mc purple"><div class="ml">Total Capital Pool</div><div class="mv purple" id="d-balance">KES 0</div><div class="ms">Total collective fund</div></div>
+        <div class="mc green"><div class="ml">Target Month Collection</div><div class="mv green" id="d-col">KES 0</div><div class="ms" id="d-mlbl">—</div></div>
+        <div class="mc gold"><div class="ml">Active Credit</div><div class="mv gold" id="d-loans">KES 0</div><div class="ms" id="d-lcount">0 outstanding</div></div>
+        <div class="mc red"><div class="ml">Total Overdue Penalties</div><div class="mv red" id="d-fines">KES 0</div><div class="ms">Unpaid fines balance</div></div>
+      </div>
+      <div class="g2">
+        <div class="card"><div class="ct">Monthly Accumulation</div><div style="position:relative;height:220px"><canvas id="chart"></canvas></div></div>
+        <div class="card"><div class="ct">Recent Transactions</div><div id="mstanding"></div></div>
+      </div>
+    </div>
+
+    <div id="pg-members" class="pg">
+      <div class="ph"><div class="pt">Group Members Directory</div></div>
+      <div class="mgrid" id="mgrid"></div>
+    </div>
+
+    <div id="pg-contribs" class="pg">
+      <div class="ph"><div class="pt">Contributions Ledger</div></div>
+      <div class="card" style="padding:0;overflow:hidden"><div id="ctable"></div></div>
+    </div>
+
+    <div id="pg-loans" class="pg">
+      <div class="ph"><div class="pt">Loan Accounts Tracker</div></div>
+      <div id="loanList"></div>
+    </div>
+
+    <div id="pg-fines" class="pg">
+      <div class="ph"><div class="pt">Fines Management Matrix</div></div>
+      <div class="card" style="padding:0;overflow:hidden"><div id="ftable"></div></div>
+    </div>
+  </main>
+</div>
+</div>
+
+<script>
+// Exact user names generated safely inline
+let members = [
+  { id: "m1", name: "Alex Maina", phone: "0700 000 001", role: "Admin" },
+  { id: "m2", name: "Antony Njogu", phone: "0700 000 002", role: "Treasurer" },
+  { id: "m3", name: "Keziah Miano", phone: "0700 000 003", role: "Member" },
+  { id: "m4", name: "Edward Mwangi", phone: "0700 000 004", role: "Member" }
+];
+
+let contributions = [
+  { memberId: "m1", month: "2026-05", amount: 300, method: "M-Pesa", date: "2026-05-02" },
+  { memberId: "m2", month: "2026-05", amount: 300, method: "M-Pesa", date: "2026-05-03" },
+  { memberId: "m3", month: "2026-05", amount: 300, method: "Cash", date: "2026-05-05" },
+  { memberId: "m1", month: "2026-06", amount: 300, method: "M-Pesa", date: "2026-06-01" },
+  { memberId: "m4", month: "2026-06", amount: 300, method: "M-Pesa", date: "2026-06-04" }
+];
+
+let loans = [
+  { id: "l1", memberId: "m3", amount: 20000, repaid: 12000, date: "2026-02-10" },
+  { id: "l2", memberId: "m4", amount: 15000, repaid: 5000, date: "2026-04-15" }
+];
+
+let fines = [
+  { memberId: "m4", amount: 500, reason: "Late meeting attendance", status: "Unpaid", date: "2026-05-12" }
+];
+
+let chart = null;
+const el = id => document.getElementById(id);
+const fmt = n => 'KES ' + Math.round(n).toLocaleString();
+const ini = name => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+window.nav = (id, btn) => {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  el('pg-' + id).classList.add('on');
+  if (btn) btn.classList.add('on');
+};
+
+window.refresh = function() {
+  const selectedMonth = el('gmonth').value;
+  el('d-mlbl').textContent = "Target Focus: " + selectedMonth;
+
+  let totalFund = contributions.reduce((acc, c) => acc + c.amount, 0);
+  let monthFund = contributions.filter(c => c.month === selectedMonth).reduce((acc, c) => acc + c.amount, 0);
+  let activeLoansAmt = loans.reduce((acc, l) => acc + (l.amount - l.repaid), 0);
+  let fineAmt = fines.filter(f => f.status === 'Unpaid').reduce((acc, f) => acc + f.amount, 0);
+
+  el('d-balance').textContent = fmt(totalFund);
+  el('d-col').textContent = fmt(monthFund);
+  el('d-loans').textContent = fmt(activeLoansAmt);
+  el('d-fines').textContent = fmt(fineAmt);
+
+  el('mcnt').textContent = members.length;
+  el('lcnt').textContent = loans.filter(l => l.amount > l.repaid).length;
+  el('fcnt').textContent = fines.filter(f => f.status === 'Unpaid').length;
+
+  renderMembers();
+  renderContribs();
+  renderLoans();
+  renderFines();
+  renderRecentTransactions();
+  buildChart();
+};
+
+function renderMembers() {
+  const grid = el('mgrid');
+  if (!grid) return;
+  grid.innerHTML = members.map(m => `
+    <div class="mcard">
+      <div class="av">${ini(m.name)}</div>
+      <div>
+        <div class="mname">${m.name}</div>
+        <div class="mphone">${m.role} &middot; ${m.phone}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderContribs() {
+  const t = el('ctable');
+  if (!t) return;
+  t.innerHTML = `
+    <table>
+      <thead><tr><th>Member</th><th>Month</th><th>Amount</th><th>Method</th><th>Date Logged</th></tr></thead>
+      <tbody>
+        ${contributions.map(c => {
+          let m = members.find(x => x.id === c.memberId);
+          return `<tr><td><b>${m ? m.name : 'Unknown'}</b></td><td>${c.month}</td><td>${fmt(c.amount)}</td><td><span class="bx purple">${c.method}</span></td><td>${c.date}</td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+// Fixed function structure error that crashed the page engine completely
+function renderLoans() {
+  const lBox = el('loanList');
+  if (!lBox) return;
+  lBox.innerHTML = loans.map(l => {
+    let m = members.find(x => x.id === l.memberId);
+    let pct = (l.repaid / l.amount) * 100;
+    return `
+      <div class="loan-card">
+        <div class="loan-header"><strong>${m ? m.name : 'Unknown'}</strong><span class="bx gold">${fmt(l.amount - l.repaid)} Left</span></div>
+        <div class="loan-progress"><div class="loan-bar" style="width: ${pct}%"></div></div>
+        <div class="loan-meta"><span>Issued: ${l.date}</span><span>Repaid: ${fmt(l.repaid)} / ${fmt(l.amount)}</span></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderFines() {
+  const f = el('ftable');
+  if (!f) return;
+  f.innerHTML = `
+    <table>
+      <thead><tr><th>Member</th><th>Reason Details</th><th>Penalty</th><th>Status</th></tr></thead>
+      <tbody>
+        ${fines.map(fine => {
+          let m = members.find(x => x.id === fine.memberId);
+          return `<tr><td><b>${m ? m.name : 'Unknown'}</b></td><td>${fine.reason}</td><td>${fmt(fine.amount)}</td><td><span class="bx red">${fine.status}</span></td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderRecentTransactions() {
+  const container = el('mstanding');
+  if (!container) return;
+  let recent = [...contributions].reverse().slice(0, 4);
+  container.innerHTML = recent.map(c => {
+    let m = members.find(x => x.id === c.memberId);
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-weight:600; font-size:13px">${m ? m.name : 'Unknown'}</div>
+          <div style="color:var(--muted); font-size:11px">Contribution Verified</div>
+        </div>
+        <div style="color:var(--green); font-weight:700; font-size:13px">+${fmt(c.amount)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function buildChart() {
+  const ctx = el('chart');
+  if (!ctx) return;
+  if (chart) chart.destroy();
+
+  let months = ["2026-03", "2026-04", "2026-05", "2026-06"];
+  let data = months.map(m => contributions.filter(c => c.month === m).reduce((s, c) => s + c.amount, 0));
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ["March", "April", "May", "June"],
+      datasets: [{
+        data: data,
+        borderColor: '#7c6af7',
+        backgroundColor: 'rgba(124,106,247,0.1)',
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6b6a80' } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6b6a80' } }
+      }
+    }
+  });
+}
+
+function initMonths(){
+  const sel = el('gmonth'), now = new Date();
+  for(let i = 0; i < 6; i++){
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const o = document.createElement('option');
+    o.value = d.toISOString().slice(0, 7);
+    o.textContent = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+    if (i === 1) o.selected = true;
+    sel.appendChild(o);
+  }
+}
+
+window.exportCSV = function() {
+  if (!contributions.length) return;
+  let csv = 'Member,Month,Amount,Method,Date\n' + contributions.map(c => {
+    let m = members.find(x => x.id === c.memberId);
+    return `${m ? m.name : 'Unknown'},${c.month},${c.amount},${c.method},${c.date}`;
+  }).join('\n');
+  let blob = new Blob([csv], { type: 'text/csv' });
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'koho_ledger.csv';
+  a.click();
+};
+
+window.addEventListener('DOMContentLoaded', () => {
+  initMonths();
+  if (el('ldr')) el('ldr').style.display = 'none';
+  if (el('appShell')) el('appShell').style.display = 'block';
+  refresh();
+});
+</script>
+</body>
+</html>
