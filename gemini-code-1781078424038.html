@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOHO Investment</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c26;--surface3:#242432;
+  --border:#2a2a3a;--text:#f0eff8;--muted:#6b6a80;
+  --accent:#7c6af7;--accent-light:rgba(124,106,247,0.15);--accent-glow:rgba(124,106,247,0.3);
+  --green:#22c55e;--green-dim:rgba(34,197,94,0.12);
+  --red:#ef4444;--red-dim:rgba(239,68,68,0.12);
+  --gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);
+  --blue:#3b82f6;--blue-dim:rgba(59,130,246,0.12);
+  --orange:#f97316;--orange-dim:rgba(249,115,22,0.12);
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+  --font:'Space Grotesk',sans-serif;--font-display:'Syne',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;min-height:100vh}
+
+.pin-inputs{display:flex;gap:10px;justify-content:center;margin:1.25rem 0}
+.pin-inputs input{width:54px;height:58px;text-align:center;font-size:24px;font-weight:700;border:2px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);font-family:var(--font-display);transition:border-color .15s}
+.pin-inputs input:focus{outline:none;border-color:var(--accent)}
+.pin-err{color:var(--red);font-size:12px;min-height:18px;margin-top:4px}
+
+/* HEADER */
+#appShell{display:none}
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100}
+.hlogo{font-family:var(--font-display);font-size:20px;font-weight:800;background:linear-gradient(135deg,#7c6af7,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hright{display:flex;align-items:center;gap:10px}
+.sync-pill{font-size:11px;padding:4px 10px;border-radius:99px;border:1px solid var(--border);display:flex;align-items:center;gap:5px;color:var(--muted)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.dot.off{background:var(--red)}.dot.spin{background:var(--gold);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+select.msel{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--font);font-size:12px;padding:5px 9px;cursor:pointer}
+.pin-btn{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--muted);font-family:var(--font);font-size:12px;font-weight:600;padding:5px 12px;cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
+.pin-btn:hover{border-color:var(--accent);color:var(--accent)}
+.pin-btn.unlocked{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+
+/* LAYOUT */
+.wrap{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 60px)}
+aside{background:var(--surface);border-right:1px solid var(--border);padding:1.25rem .75rem;display:flex;flex-direction:column;gap:2px}
+.nlbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:0 10px;margin:14px 0 5px;font-weight:600}
+.nb{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:var(--radius-sm);background:none;border:none;color:var(--muted);font-size:13px;font-family:var(--font);font-weight:500;cursor:pointer;width:100%;text-align:left;transition:all .15s}
+.nb:hover{background:var(--surface2);color:var(--text)}
+.nb.on{background:var(--accent-light);color:var(--accent);font-weight:600}
+.nb svg{width:16px;height:16px;flex-shrink:0;stroke-width:2}
+.nc{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px}
+.nc.red{background:var(--red)}.nc.gold{background:var(--gold)}
+
+/* MAIN */
+main{padding:1.75rem;overflow-y:auto;background:var(--bg)}
+.pg{display:none}.pg.on{display:block}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;min-height:40px}
+.pt{font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-0.5px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);border:none;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.bp{background:var(--accent);color:#fff}.bp:hover{background:#6b5ce7}
+.bs{background:var(--surface2);color:var(--text);border:1px solid var(--border)}.bs:hover{background:var(--surface3)}
+.bd{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
+.btn svg{width:14px;height:14px;stroke-width:2.5}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:1.5rem}
+.mc{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.25rem}
+.mc.purple{border-left:3px solid var(--accent)}.mc.green{border-left:3px solid var(--green)}
+.mc.red{border-left:3px solid var(--red)}.mc.gold{border-left:3px solid var(--gold)}
+.ml{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:7px}
+.mv{font-size:22px;font-weight:700;font-family:var(--font-display)}
+.mv.purple{color:var(--accent)}.mv.green{color:var(--green)}.mv.red{color:var(--red)}
+.mv.gold{color:var(--gold)}
+.ms{font-size:12px;color:var(--muted);margin-top:3px}
+
+/* CARDS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem 1.4rem;margin-bottom:1rem}
+.ct{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:1rem}
+
+/* TABLES */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;padding:8px 11px;border-bottom:1px solid var(--border)}
+td{padding:10px 11px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+
+/* BADGES */
+.bx{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px}
+.bx.green{background:var(--green-dim);color:var(--green)}
+.bx.red{background:var(--red-dim);color:var(--red)}
+.bx.gold{background:var(--gold-dim);color:var(--gold)}
+.bx.purple{background:var(--accent-light);color:var(--accent)}
+
+/* MEMBER CARDS */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:1rem}
+.mcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;transition:all .2s;position:relative}
+.av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;margin-bottom:9px;font-family:var(--font-display);background:var(--accent-light);color:var(--accent)}
+.mname{font-weight:700;font-size:13.5px;margin-bottom:2px;color:var(--text)}
+.mphone{font-size:11.5px;color:var(--muted)}
+.mtot{font-size:12.5px;font-weight:600;color:var(--accent);margin-top:7px}
+
+/* LOAN CARD */
+.loan-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem;margin-bottom:10px}
+.loan-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.loan-name{font-weight:700;font-size:14px}
+.loan-progress{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden;margin:8px 0}
+.loan-bar{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));border-radius:99px}
+.loan-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(12px);background:var(--accent);color:#fff;font-weight:600;font-size:13px;padding:9px 20px;border-radius:99px;opacity:0;transition:all .3s;pointer-events:none;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;color:var(--muted);padding:3rem 1rem;font-size:14px}
+.ldr{position:fixed;inset:0;background:rgba(10,10,15,.95);z-index:500;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.lsp{width:38px;height:38px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltxt{font-family:var(--font-display);font-size:17px;color:var(--accent)}
+</style>
+</head>
+<body>
+
+<div class="ldr" id="ldr"><div class="lsp"></div><div class="ltxt">Loading KOHO Ecosystem...</div></div>
+<div id="appShell">
+
+<header>
+  <div class="hlogo">KOHO Investment</div>
+  <div class="hright">
+    <div class="sync-pill"><div class="dot" id="sdot"></div><span id="stxt">Local Database Connected</span></div>
+    <select class="msel" id="gmonth" onchange="refresh()"></select>
+    <button class="pin-btn unlocked" id="pinBtn">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span id="pinBtnTxt">Admin Dashboard</span>
+    </button>
+  </div>
+</header>
+
+<div class="wrap">
+  <aside>
+    <div class="nlbl">Overview</div>
+    <button class="nb on" onclick="nav('dash',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Dashboard
+    </button>
+    <button class="nb" onclick="nav('members',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Members <span class="nc" id="mcnt">0</span>
+    </button>
+    <div class="nlbl">Finance</div>
+    <button class="nb" onclick="nav('contribs',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Contributions
+    </button>
+    <button class="nb" onclick="nav('loans',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      Loans <span class="nc gold" id="lcnt">0</span>
+    </button>
+    <button class="nb" onclick="nav('fines',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      Fines <span class="nc red" id="fcnt">0</span>
+    </button>
+    <div class="nlbl">Reports</div>
+    <button class="nb" onclick="exportCSV()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export CSV
+    </button>
+  </aside>
+
+  <main>
+    <div id="pg-dash" class="pg on">
+      <div class="ph"><div class="pt">Analytics Dashboard</div></div>
+      <div class="metrics">
+        <div class="mc purple"><div class="ml">Fund Balance</div><div class="mv purple" id="d-balance">KES 0</div><div class="ms">Total collective capital</div></div>
+        <div class="mc green"><div class="ml">Collected This Month</div><div class="mv green" id="d-col">KES 0</div><div class="ms" id="d-mlbl">—</div></div>
+        <div class="mc gold"><div class="ml">Active Loans</div><div class="mv gold" id="d-loans">KES 0</div><div class="ms" id="d-lcount">0 outstanding</div></div>
+        <div class="mc red"><div class="ml">Unpaid Fines</div><div class="mv red" id="d-fines">KES 0</div><div class="ms">Strict tracking compliance</div></div>
+      </div>
+      <div class="g2">
+        <div class="card"><div class="ct">Monthly Accumulation</div><div style="position:relative;height:220px"><canvas id="chart"></canvas></div></div>
+        <div class="card"><div class="ct">Recent Ledger Activities</div><div id="mstanding"></div></div>
+      </div>
+    </div>
+
+    <div id="pg-members" class="pg">
+      <div class="ph"><div class="pt">Group Directory</div></div>
+      <div class="mgrid" id="mgrid"></div>
+    </div>
+
+    <div id="pg-contribs" class="pg">
+      <div class="ph"><div class="pt">Transactional Audit Trail</div></div>
+      <div class="card" style="padding:0;overflow:hidden"><div id="ctable"></div></div>
+    </div>
+
+    <div id="pg-loans" class="pg">
+      <div class="ph"><div class="pt">Loan Portfolio Monitoring</div></div>
+      <div id="loanList"></div>
+    </div>
+
+    <div id="pg-fines" class="pg">
+      <div class="ph"><div class="pt">Penalties Tracker</div></div>
+      <div class="card" style="padding:0;overflow:hidden"><div id="ftable"></div></div>
+    </div>
+  </main>
+</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// Updated structure containing the exact roster from the meeting minutes image
+let members = JSON.parse(localStorage.getItem('koho_members')) || [
+  { id: "m1", name: "David Njuguna", phone: "0700 000 001", role: "Chair" },
+  { id: "m2", name: "Michael Kamande", phone: "0700 000 002", role: "Treasurer" },
+  { id: "m3", name: "Moses Njuguna", phone: "0700 000 003", role: "Secretary" },
+  { id: "m4", name: "Harrison Mwangi", phone: "0700 000 004", role: "Director" },
+  { id: "m5", name: "Patrick Njuguna", phone: "0700 000 005", role: "Director" },
+  { id: "m6", name: "Nelson Kangethe", phone: "0700 000 006", role: "Director" },
+  { id: "m7", name: "Rays Muchurira", phone: "0700 000 007", role: "Director" },
+  { id: "m8", name: "Alex Maina", phone: "0700 000 008", role: "Director" },
+  { id: "m9", name: "Michael Thumbi", phone: "0700 000 009", role: "Director" },
+  { id: "m10", name: "Bernard Mugo", phone: "0700 000 010", role: "Director" },
+  { id: "m11", name: "Joseph Gatui", phone: "0700 000 011", role: "Director" },
+  { id: "m12", name: "Paul Maina", phone: "0700 000 012", role: "Director" },
+  { id: "m13", name: "Ronald Kiiru", phone: "0700 000 013", role: "Absent with Apology" }
+];
+
+let contributions = JSON.parse(localStorage.getItem('koho_contribs')) || [
+  { memberId: "m1", month: "2026-05", amount: 500, method: "M-Pesa", date: "2026-05-02" },
+  { memberId: "m2", month: "2026-05", amount: 500, method: "M-Pesa", date: "2026-05-03" },
+  { memberId: "m3", month: "2026-05", amount: 500, method: "M-Pesa", date: "2026-05-03" },
+  { memberId: "m8", month: "2026-05", amount: 500, method: "M-Pesa", date: "2026-05-04" },
+  { memberId: "m1", month: "2026-06", amount: 500, method: "M-Pesa", date: "2026-06-01" },
+  { memberId: "m4", month: "2026-06", amount: 500, method: "Bank Transfer", date: "2026-06-04" }
+];
+
+let loans = JSON.parse(localStorage.getItem('koho_loans')) || [
+  { id: "l1", memberId: "m4", amount: 25000, repaid: 15000, date: "2026-03-10" },
+  { id: "l2", memberId: "m7", amount: 15000, repaid: 5000, date: "2026-04-15" }
+];
+
+let fines = JSON.parse(localStorage.getItem('koho_fines')) || [
+  { memberId: "m13", amount: 500, reason: "Meeting absence penalty", status: "Unpaid", date: "2026-06-10" }
+];
+
+let chart = null;
+const el = id => document.getElementById(id);
+const fmt = n => 'KES ' + Math.round(n).toLocaleString();
+const ini = name => name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+
+window.nav = (id, btn) => {
+  document.querySelectorAll('.pg').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  el('pg-' + id).classList.add('on');
+  if (btn) btn.classList.add('on');
+};
+
+window.refresh = function() {
+  const selectedMonth = el('gmonth').value;
+  el('d-mlbl').textContent = "Target Focus: " + selectedMonth;
+
+  let totalFund = contributions.reduce((acc, c) => acc + c.amount, 0);
+  let monthFund = contributions.filter(c => c.month === selectedMonth).reduce((acc, c) => acc + c.amount, 0);
+  let activeLoansAmt = loans.reduce((acc, l) => acc + (l.amount - l.repaid), 0);
+  let fineAmt = fines.filter(f => f.status === 'Unpaid').reduce((acc, f) => acc + f.amount, 0);
+
+  el('d-balance').textContent = fmt(totalFund);
+  el('d-col').textContent = fmt(monthFund);
+  el('d-loans').textContent = fmt(activeLoansAmt);
+  el('d-fines').textContent = fmt(fineAmt);
+
+  el('mcnt').textContent = members.length;
+  el('lcnt').textContent = loans.filter(l => l.amount > l.repaid).length;
+  el('fcnt').textContent = fines.filter(f => f.status === 'Unpaid').length;
+
+  renderMembers();
+  renderContribs();
+  renderLoans();
+  renderFines();
+  renderRecentTransactions();
+  buildChart();
+};
+
+function renderMembers() {
+  const grid = el('mgrid');
+  if (!grid) return;
+  grid.innerHTML = members.map(m => {
+    let mTotal = contributions.filter(c => c.memberId === m.id).reduce((s, c) => s + c.amount, 0);
+    return `
+      <div class="mcard">
+        <div class="av">${ini(m.name)}</div>
+        <div class="mname">${m.name}</div>
+        <div class="mphone">${m.role} &middot; ${m.phone}</div>
+        <div class="mtot">Total Pool: ${fmt(mTotal)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderContribs() {
+  const t = el('ctable');
+  if (!t) return;
+  t.innerHTML = `
+    <table>
+      <thead><tr><th>Member</th><th>Month Allocation</th><th>Contribution Amt</th><th>Verification</th><th>Date Logged</th></tr></thead>
+      <tbody>
+        ${contributions.map(c => {
+          let m = members.find(x => x.id === c.memberId);
+          return `<tr><td><b>${m ? m.name : 'Unknown'}</b></td><td>${c.month}</td><td>${fmt(c.amount)}</td><td><span class="bx purple">${c.method}</span></td><td>${c.date}</td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderLoans() {
+  const lBox = el('loanList');
+  if (!lBox) return;
+  lBox.innerHTML = loans.map(l => {
+    let m = members.find(x => x.id === l.memberId);
+    let pct = (l.repaid / l.amount) * 100;
+    return `
+      <div class="loan-card">
+        <div class="loan-header"><span class="loan-name">${m ? m.name : 'Unknown'}</span><span class="bx gold">${fmt(l.amount - l.repaid)} Outstanding</span></div>
+        <div class="loan-progress"><div class="loan-bar" style="width: ${pct}%"></div></div>
+        <div class="loan-meta"><span>Issued: ${l.date}</span><span>Paid: ${fmt(l.repaid)} / ${fmt(l.amount)}</span></div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderFines() {
+  const f = el('ftable');
+  if (!f) return;
+  f.innerHTML = `
+    <table>
+      <thead><tr><th>Member</th><th>Reason Details</th><th>Penalty</th><th>Status Metric</th></tr></thead>
+      <tbody>
+        ${fines.map(fine => {
+          let m = members.find(x => x.id === fine.memberId);
+          return `<tr><td><b>${m ? m.name : 'Unknown'}</b></td><td>${fine.reason}</td><td>${fmt(fine.amount)}</td><td><span class="bx red">${fine.status}</span></td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderRecentTransactions() {
+  const container = el('mstanding');
+  if (!container) return;
+  let recent = [...contributions].reverse().slice(0, 4);
+  container.innerHTML = recent.map(c => {
+    let m = members.find(x => x.id === c.memberId);
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-weight:600; font-size:13px">${m ? m.name : 'Unknown'}</div>
+          <div style="color:var(--muted); font-size:11px">Ledger contribution verified</div>
+        </div>
+        <div style="color:var(--green); font-weight:700; font-size:13px">+${fmt(c.amount)}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function buildChart() {
+  const ctx = el('chart');
+  if (!ctx) return;
+  if (chart) chart.destroy();
+
+  let months = ["2026-03", "2026-04", "2026-05", "2026-06"];
+  let data = months.map(m => contributions.filter(c => c.month === m).reduce((s, c) => s + c.amount, 0));
+
+  chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ["March", "April", "May", "June"],
+      datasets: [{
+        label: 'Collections',
+        data: data,
+        borderColor: '#7c6af7',
+        backgroundColor: 'rgba(124,106,247,0.1)',
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6b6a80' } },
+        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#6b6a80' } }
+      }
+    }
+  });
+}
+
+function initMonths(){
+  const sel = el('gmonth'), now = new Date();
+  for(let i = 0; i < 6; i++){
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const o = document.createElement('option');
+    o.value = d.toISOString().slice(0, 7);
+    o.textContent = d.toLocaleString('default', { month: 'long', year: 'numeric' });
+    if (i === 1) o.selected = true;
+    sel.appendChild(o);
+  }
+}
+
+window.exportCSV = function() {
+  if (!contributions.length) return;
+  let csv = 'Member,Month,Amount,Method,Date\n' + contributions.map(c => {
+    let m = members.find(x => x.id === c.memberId);
+    return `${m ? m.name : 'Unknown'},${c.month},${c.amount},${c.method},${c.date}`;
+  }).join('\n');
+  let blob = new Blob([csv], { type: 'text/csv' });
+  let a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'koho_ledger.csv';
+  a.click();
+};
+
+function showToast(msg) {
+  const t = el('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ---- APP LIFECYCLE INITIALIZATION ----
+window.addEventListener('DOMContentLoaded', () => {
+  initMonths();
+  if (el('ldr')) el('ldr').style.display = 'none';
+  if (el('appShell')) el('appShell').style.display = 'block';
+  refresh();
+});
+</script>
+</body>
+</html>
